@@ -1,0 +1,21 @@
+// SMART SHOPPER NORRKÖPING - CORE ENGINE
+const stores = [
+  { name: "ICA Maxi Norrköping", id: "ica-maxi-nkpg" },
+  { name: "Willys Norrköping City", id: "willys-nkpg" },
+  { name: "Lidl Norrköping", id: "lidl-nkpg" },
+  { name: "City Gross Norrköping", id: "citygross-nkpg" }
+];
+
+// Automatisk hämtning av kampanjer (Mockup-logik för demo)
+async function updateWeeklyDeals() {
+  console.log("Hämtar reklamblad för Norrköping...");
+  // Här kopplar vi på scraping-scriptet jag skrev i PDF:en
+}
+
+// PDF-Generation
+const generatePDF = (list) => {
+  const doc = new jsPDF();
+  doc.text("Din Inköpslista - Billigast i Norrköping", 10, 10);
+  // Logik som delar upp listan per butik
+  doc.save("Inkopslita.pdf");
+};
