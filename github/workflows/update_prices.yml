@@ -1,0 +1,31 @@
+name: Update Grocery Prices Norrkoping
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Körs varje måndag kl 06:00
+  workflow_dispatch: # Tillåter dig att starta den manuellt för test
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python_version: '3.9'
+      
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+      
+      - name: Run Scraper
+        run: python scraper.py
+      
+      - name: Commit and push changes
+        run: |
+          git config --global user.name 'SmartShopper-Bot'
+          git config --global user.email 'bot@smartshopper.ai'
+          git add data.json
+          git commit -m "Automatiskt uppdaterade priser Norrköping" || exit 0
+          git push
