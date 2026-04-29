@@ -1,21 +1,145 @@
-// SMART SHOPPER NORRKÖPING - CORE ENGINE
-const stores = [
-  { name: "ICA Maxi Norrköping", id: "ica-maxi-nkpg" },
-  { name: "Willys Norrköping City", id: "willys-nkpg" },
-  { name: "Lidl Norrköping", id: "lidl-nkpg" },
-  { name: "City Gross Norrköping", id: "citygross-nkpg" }
-];
 
-// Automatisk hämtning av kampanjer (Mockup-logik för demo)
-async function updateWeeklyDeals() {
-  console.log("Hämtar reklamblad för Norrköping...");
-  // Här kopplar vi på scraping-scriptet jag skrev i PDF:en
-}
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SmartShopper Norrköping</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        body { background-color: #f2f2f7; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        .ios-card { background: white; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .store-pill { padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: white; }
+    </style>
+</head>
+<body class="p-4 pb-24">
 
-// PDF-Generation
-const generatePDF = (list) => {
-  const doc = new jsPDF();
-  doc.text("Din Inköpslista - Billigast i Norrköping", 10, 10);
-  // Logik som delar upp listan per butik
-  doc.save("Inkopslita.pdf");
-};
+    <header class="mb-6 mt-4">
+        <h1 class="text-3xl font-bold text-gray-900">SmartShopper</h1>
+        <p class="text-gray-500">Bästa priserna i Norrköping</p>
+    </header>
+
+    <div class="ios-card p-4 mb-6">
+        <input type="text" id="itemSearch" placeholder="Sök vara (t.ex. mjölk, smör...)" 
+               class="w-full p-3 bg-gray-100 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+        
+        <div id="searchResults" class="mt-4 space-y-3">
+            </div>
+    </div>
+
+    <section>
+        <h2 class="text-xl font-semibold mb-4 flex justify-between items-center">
+            Din Inköpslista
+            <button onclick="clearList()" class="text-sm text-red-500 font-normal">Rensa</button>
+        </h2>
+        <div id="shoppingList" class="space-y-3">
+            </div>
+    </section>
+
+    <div class="fixed bottom-0 left-0 right-0 p-4 bg-white/80 backdrop-blur-md border-t border-gray-200">
+        <button onclick="generateOptimizedPDF()" 
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-xl shadow-lg transition-all active:scale-95">
+            Skapa Optimerad PDF
+        </button>
+    </div>
+
+    <script>
+        // DATABAS: Här landar datan från dina scrapers
+        const database = [
+            { id: 1, name: "Mjölk 1.5L", prices: { ica: 14.50, willys: 12.90, lidl: 11.90, citygross: 13.95 }, category: "Mejeri" },
+            { id: 2, name: "Svenskt Smör 500g", prices: { ica: 55.90, willys: 39.90, lidl: 45.00, citygross: 49.90 }, isPromo: true },
+            { id: 3, name: "Kycklingfilé 1kg", prices: { ica: 129.00, willys: 115.00, lidl: 89.00, citygross: 119.00 }, isPromo: true },
+            { id: 4, name: "Kaffe Arvid Nordquist", prices: { ica: 49.00, willys: 54.00, lidl: 52.00, citygross: 45.00 }, isPromo: false }
+        ];
+
+        let myCart = [];
+
+        // Sökfunktion
+        document.getElementById('itemSearch').addEventListener('input', (e) => {
+            const val = e.target.value.toLowerCase();
+            const resultsDiv = document.getElementById('searchResults');
+            if(val.length < 2) { resultsDiv.innerHTML = ''; return; }
+
+            const filtered = database.filter(i => i.name.toLowerCase().includes(val));
+            resultsDiv.innerHTML = filtered.map(item => {
+                const bestPrice = Math.min(...Object.values(item.prices));
+                return `
+                    <div class="flex justify-between items-center p-2 border-b border-gray-50">
+                        <div>
+                            <p class="font-medium">${item.name}</p>
+                            <p class="text-xs text-green-600">Från ${bestPrice.toFixed(2)} kr</p>
+                        </div>
+                        <button onclick="addToCart(${item.id})" class="bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm font-bold">+</button>
+                    </div>
+                `;
+            }).join('');
+        });
+
+        function addToCart(id) {
+            const item = database.find(i => i.id === id);
+            myCart.push(item);
+            renderCart();
+            document.getElementById('itemSearch').value = '';
+            document.getElementById('searchResults').innerHTML = '';
+        }
+
+        function renderCart() {
+            const listDiv = document.getElementById('shoppingList');
+            if(myCart.length === 0) { listDiv.innerHTML = '<p class="text-gray-400 text-center py-8">Listan är tom</p>'; return; }
+            
+            listDiv.innerHTML = myCart.map((item, idx) => `
+                <div class="ios-card p-4 flex justify-between items-center animate-fade-in">
+                    <span>${item.name}</span>
+                    <button onclick="removeFromCart(${idx})" class="text-red-400">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function removeFromCart(idx) {
+            myCart.splice(idx, 1);
+            renderCart();
+        }
+
+        function clearList() { myCart = []; renderCart(); }
+
+        // PDF GENERERING (DEN SMARTA DELEN)
+        function generateOptimizedPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(22);
+            doc.text("SmartShopper Norrköping", 20, 20);
+            doc.setFontSize(12);
+            doc.text(`Skapad: ${new Date().toLocaleDateString()}`, 20, 30);
+            
+            let y = 50;
+            const storeGroups = { ica: [], willys: [], lidl: [], citygross: [] };
+
+            myCart.forEach(item => {
+                const storeKeys = Object.keys(item.prices);
+                const cheapestStore = storeKeys.reduce((a, b) => item.prices[a] < item.prices[b] ? a : b);
+                storeGroups[cheapestStore].push({ name: item.name, price: item.prices[cheapestStore] });
+            });
+
+            Object.entries(storeGroups).forEach(([store, items]) => {
+                if(items.length > 0) {
+                    doc.setFont(undefined, 'bold');
+                    doc.text(store.toUpperCase(), 20, y);
+                    doc.setFont(undefined, 'normal');
+                    y += 7;
+                    items.forEach(i => {
+                        doc.text(`- ${i.name}: ${i.price.toFixed(2)} kr`, 25, y);
+                        y += 7;
+                    });
+                    y += 5;
+                }
+            });
+
+            doc.save("Inkopslita_Norrkoping.pdf");
+        }
+        
+        renderCart();
+    </script>
+</body>
+</html>
