@@ -62,13 +62,21 @@
 
     <script>
         // UTÖKAD DATABAS (MJÖLK-TEST)
-        const database = [
-            { id: 1, name: "Arla Mellanmjölk", brand: "Arla", amount: "1.5L", img: "https://images.unsplash.com/photo-1550583724-125581f77833?auto=format&fit=crop&q=80&w=200", prices: { ica: 16.50, willys: 14.90, lidl: 15.50, citygross: 16.95 }, promo: false },
-            { id: 2, name: "Garant Standardmjölk", brand: "Garant", amount: "1L", img: "https://images.unsplash.com/photo-1563636619-e9107da5a1bb?auto=format&fit=crop&q=80&w=200", prices: { ica: 13.50, willys: 11.90, lidl: 12.00, citygross: 12.50 }, promo: true },
-            { id: 3, name: "Valio Laktosfri", brand: "Valio", amount: "1L", img: "https://images.unsplash.com/photo-1528498033053-35a713094b8b?auto=format&fit=crop&q=80&w=200", prices: { ica: 22.50, willys: 19.90, lidl: 20.50, citygross: 21.95 }, promo: false },
-            { id: 4, name: "Arla Smör", brand: "Arla", amount: "500g", img: "https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?auto=format&fit=crop&q=80&w=200", prices: { ica: 59.90, willys: 45.00, lidl: 49.00, citygross: 55.00 }, promo: true },
-            { id: 5, name: "Bananer Eko", brand: "Eko", amount: "1kg", img: "https://images.unsplash.com/photo-1603833665858-e61d17a86224?auto=format&fit=crop&q=80&w=200", prices: { ica: 24.90, willys: 21.50, lidl: 19.90, citygross: 25.00 }, promo: false }
-        ];
+        let database = [];
+
+// Denna rad hämtar den färska datan som din robot har skrapat fram
+async function loadRealData() {
+    try {
+        const response = await fetch('data.json');
+        database = await response.json();
+        renderProducts(database); // Uppdaterar framsidan med riktiga priser
+    } catch (e) {
+        console.log("Kunde inte hämta live-data, använder reservdata");
+        // Här kan vi ha kvar din gamla mjölk-lista som backup
+    }
+}
+loadRealData();
+
 
         let cart = [];
 
